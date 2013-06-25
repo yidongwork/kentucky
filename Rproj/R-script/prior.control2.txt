@@ -1,0 +1,267 @@
+prior.control2 <- function (beta.prior = c("flat", "normal", "fixed"), beta = NULL, 
+    beta.var.std = NULL, sigmasq.prior = c("reciprocal", "uniform", 
+        "sc.inv.chisq", "fixed"), sigmasq = NULL, df.sigmasq = NULL, 
+    phi.prior = c("uniform", "exponential", "fixed", "squared.reciprocal", 
+        "reciprocal"), phi = NULL, phi.discrete = NULL, thetaS.prior = c("fixed", 
+        "uniform", "reciprocal"), thetaS = 0, thetaS.discrete = NULL,
+		tausq.rel.prior = c("fixed", "uniform", "reciprocal"), tausq.rel = 0, tausq.rel.discrete = NULL) 
+{
+    beta.prior <- match.arg(beta.prior)
+    if (beta.prior == "fixed" & is.null(beta)) 
+        stop("prior.control: argument beta must be provided with fixed prior for this parameter")
+    if (beta.prior == "normal") {
+        if (is.null(beta) | is.null(beta.var.std)) 
+            stop("prior.control: arguments `beta` and `beta.var.std` must be provided with normal prior for the parameter beta")
+    }
+    sigmasq.prior <- match.arg(sigmasq.prior)
+    if (sigmasq.prior == "fixed" & is.null(sigmasq)) 
+        stop("prior.control: argument `sigmasq' must be provided with fixed prior for the parameter sigmasq")
+    if (sigmasq.prior == "sc.inv.chisq") 
+        if (is.null(sigmasq) | is.null(df.sigmasq)) 
+            stop("prior.control: arguments `sigmasq` and `df.sigmasq' must be provided for this choice of prior distribution")
+    if (!is.null(sigmasq)) 
+        if (any(sigmasq < 0)) 
+            stop("prior.control: negative values not allowed for `sigmasq'")
+    if (!is.null(phi) && length(phi) > 1) 
+        stop("prior.control: length of phi must be one. Use phi.prior and phi.discrete to specify the prior for phi or enter a single fixed value for phi")
+    if (mode(phi.prior) == "numeric") {
+        phi.prior.probs <- phi.prior
+        phi.prior <- "user"
+        if (is.null(phi.discrete)) 
+            stop("prior.control: argument phi.discrete with support points for phi must be provided\n")
+        if (length(phi.prior.probs) != length(phi.discrete)) 
+            stop("prior.control: user provided phi.prior and phi.discrete have incompatible dimensions\n")
+        if (round(sum(phi.prior.probs), digits = 8) != 1) 
+            stop("prior.control: prior probabilities provided for phi do not add up to 1")
+    }
+    else phi.prior <- match.arg(phi.prior, choices = c("uniform", 
+        "exponential", "fixed", "squared.reciprocal", "reciprocal"))
+    if (phi.prior == "fixed") {
+        if (is.null(phi)) {
+            stop("prior.control: argument `phi` must be provided with fixed prior for this parameter")
+        }
+        phi.discrete <- phi
+    }
+    else {
+        if (phi.prior == "exponential" && (is.null(phi) | (length(phi) > 
+            1))) 
+            stop("prior.control: argument `phi` must be provided when using the exponential prior for the parameter phi")
+        if (!is.null(phi.discrete)) {
+            discrete.diff <- diff(phi.discrete)
+            if (round(max(1e+08 * discrete.diff)) != round(min(1e+08 * 
+                discrete.diff))) 
+                stop("prior.control: the current implementation requires equally spaced values in the argument `phi.discrete`\n")
+        }
+    }
+    if (any(phi.discrete < 0)) 
+        stop("prior.control: negative values not allowed for parameter phi")
+	# Enki's ------------------------------------------------------------------------------------------------------ #
+    if (length(thetaS) > 1) 
+        stop("prior.control: length of thetaS must be one. Use thetaS.prior and thetaS.discrete to specify the prior for thetaS or enter a single fixed value for thetaS")
+    if (mode(thetaS.prior) == "numeric") {
+        thetaS.prior.probs <- thetaS.prior
+        thetaS.prior <- "user"
+        if (is.null(thetaS.discrete)) 
+            stop("prior.control: argument thetaS.discrete with support points for thetaS must be provided\n")
+        if (length(thetaS.prior.probs) != length(thetaS.discrete)) 
+            stop("prior.control: user provided thetaS.prior and thetaS.discrete have incompatible dimensions\n")
+        if (round(sum(thetaS.prior.probs), digits = 8) != 
+            1) 
+            stop("prior.control: prior probabilities for thetaS provided do not add up to 1")
+    }
+    else thetaS.prior <- match.arg(thetaS.prior, choices = c("fixed", 
+        "uniform", "reciprocal"))
+    if (thetaS.prior == "fixed") {
+        if (is.null(thetaS) | mode(thetaS) != "numeric") 
+            stop("prior.control: argument `thetaS` must be provided with fixed prior for the parameter thetaS")
+        thetaS.discrete <- thetaS
+    }
+    else {
+        if (is.null(thetaS.discrete)) 
+            stop("prior.control: argument `thetaS.discrete` must be provided with chosen prior for the parameter thetaS")
+        discrete.diff <- diff(thetaS.discrete)
+        if (round(max(1e+08 * discrete.diff)) != round(min(1e+08 * 
+            discrete.diff))) 
+            stop("prior.control: the current implementation requires equally spaced values in the argument `thetaS.discrete`\n")
+    }
+    if (any(thetaS.discrete < 0)) 
+        stop("prior.control: negative values not allowed for parameter thetaS")
+    # --------------------------------------------------------------------------------------------------------------------------------- #
+    if (length(tausq.rel) > 1) 
+        stop("prior.control: length of tausq.rel must be one. Use tausq.rel.prior and tausq.rel.discrete to specify the prior for tausq.rel or enter a single fixed value for tausq.rel")
+    if (mode(tausq.rel.prior) == "numeric") {
+        tausq.rel.prior.probs <- tausq.rel.prior
+        tausq.rel.prior <- "user"
+        if (is.null(tausq.rel.discrete)) 
+            stop("prior.control: argument tausq.rel.discrete with support points for tausq.rel must be provided\n")
+        if (length(tausq.rel.prior.probs) != length(tausq.rel.discrete)) 
+            stop("prior.control: user provided tausq.rel.prior and tausq.rel.discrete have incompatible dimensions\n")
+        if (round(sum(tausq.rel.prior.probs), digits = 8) != 
+            1) 
+            stop("prior.control: prior probabilities for tausq.rel provided do not add up to 1")
+    }
+    else tausq.rel.prior <- match.arg(tausq.rel.prior, choices = c("fixed", 
+        "uniform", "reciprocal"))
+    if (tausq.rel.prior == "fixed") {
+        if (is.null(tausq.rel) | mode(tausq.rel) != "numeric") 
+            stop("prior.control: argument `tausq.rel` must be provided with fixed prior for the parameter tausq.rel")
+        tausq.rel.discrete <- tausq.rel
+    }
+    else {
+        if (is.null(tausq.rel.discrete)) 
+            stop("prior.control: argument `tausq.rel.discrete` must be provided with chosen prior for the parameter tausq.rel")
+        discrete.diff <- diff(tausq.rel.discrete)
+        if (round(max(1e+08 * discrete.diff)) != round(min(1e+08 * 
+            discrete.diff))) 
+            stop("prior.control: the current implementation requires equally spaced values in the argument `tausq.rel.discrete`\n")
+    }
+    if (any(tausq.rel.discrete < 0)) 
+        stop("prior.control: negative values not allowed for parameter tausq.rel")
+    if (phi.prior != "fixed") {
+        if (mode(phi.discrete) == "numeric") {
+		# Enki's ---- need to change for thetaS too !! (not yet done !)
+            if (is.null(tausq.rel.discrete)) 
+                nsets <- length(phi.discrete)
+            else nsets <- length(phi.discrete) * length(tausq.rel.discrete)
+        }
+        else nsets <- 0
+        if (sigmasq.prior == "sc.inv.chisq") {
+            if (length(sigmasq) == nsets) 
+                dep.prior <- TRUE
+            else dep.prior <- FALSE
+        }
+        else dep.prior <- FALSE
+        if (beta.prior == "normal") {
+            if (dep.prior) {
+                if (((length(beta)/nsets)^2) != (length(beta.var.std)/nsets)) 
+                  stop("prior.control: beta and beta.var.std have incompatible dimensions")
+            }
+            else {
+                if ((length(beta))^2 != length(beta.var.std)) 
+                  stop("prior.control: beta and beta.var.std have incompatible dimensions")
+                if (inherits(try(.solve.geoR(beta.var.std), silent = TRUE), 
+                  "try-error")) 
+                  stop("prior.control: singular matrix in beta.var.std")
+                if (inherits(try(chol(beta.var.std), silent = TRUE), 
+                  "try-error")) 
+                  stop("prior.control: no Cholesky decomposition for beta.var.std")
+                if (any(beta.var.std != t(beta.var.std))) 
+                  stop("prior.control: non symmetric matrix in beta.var.std")
+            }
+        }
+    }
+    else dep.prior <- FALSE
+    if (!dep.prior & beta.prior == "normal") {
+        attr(beta.var.std, "Size") <- length(beta)
+    }
+	# Enki's --------------------------------------------------- #
+    ip <- list(beta = list(), sigmasq = list(), phi = list(), 
+        thetaS = list(), tausq.rel = list())
+	# ---------------------------------------------------------- #	
+    if (beta.prior == "fixed") {
+        ip$beta$status <- "fixed"
+        ip$beta$fixed.value <- beta
+    }
+    else {
+        ip$beta$status <- "random"
+        ip$beta$dist <- beta.prior
+        if (beta.prior == "flat") 
+            ip$beta$pars <- c(0, +Inf)
+        if (beta.prior == "normal") {
+            if (length(beta) == 1) 
+                ip$beta$pars <- c(mean = beta, var.std = beta.var.std)
+            else ip$beta$pars <- list(mean = beta, var.std = beta.var.std)
+        }
+    }
+    if (sigmasq.prior == "fixed") {
+        ip$sigmasq$status <- "fixed"
+        ip$sigmasq$fixed.value <- sigmasq
+    }
+    else {
+        ip$sigmasq$status <- "random"
+        ip$sigmasq$dist <- sigmasq.prior
+        if (sigmasq.prior == "reciprocal") 
+            ip$sigmasq$pars <- c(df = 0, var = +Inf)
+        if (sigmasq.prior == "uniform") 
+            ip$sigmasq$pars <- c(df = -2, var = +Inf)
+        if (sigmasq.prior == "sc.inv.chisq") 
+            ip$sigmasq$pars <- c(df = df.sigmasq, var = sigmasq)
+    }
+    if (phi.prior == "fixed") {
+        ip$phi$status <- "fixed"
+        ip$phi$fixed.value <- phi
+    }
+    else {
+        ip$phi$status <- "random"
+        ip$phi$dist <- phi.prior
+        if (is.null(phi.discrete)) 
+            ip$phi$probs <- NULL
+        else {
+            pd <- as.vector(phi.discrete)
+            names(pd) <- NULL
+            ip$phi$probs <- switch(phi.prior, uniform = rep(1, 
+                length(pd)), exponential = dexp(pd, rate = 1/phi), 
+                squared.reciprocal = ifelse((pd > 0), 1/(pd^2), 
+                  0), reciprocal = ifelse((pd > 0), 1/pd, 0), 
+                user = phi.prior.probs)
+            names(ip$phi$probs) <- phi.discrete
+        }
+        if (phi.prior == "exponential") 
+            ip$phi$pars <- c(ip$phi$pars, exp.par = phi)
+        ip$phi$probs <- ip$phi$probs/sum(ip$phi$probs)
+    }
+	# Enki's ---------------------------- #
+	if (thetaS.prior == "fixed") {
+        ip$thetaS$status <- "fixed"
+        ip$thetaS$fixed.value <- thetaS
+    }
+    else {
+        ip$thetaS$status <- "random"
+        ip$thetaS$dist <- thetaS.prior
+        if (is.null(thetaS.discrete)) 
+            ip$thetaS$probs <- NULL
+        else {
+            td <- as.vector(thetaS.discrete)
+            names(td) <- NULL
+            ip$thetaS$probs <- switch(thetaS.prior, uniform = rep(1, 
+                length(td)), reciprocal = ifelse((td > 0), 1/td, 
+                0), user = thetaS.prior.probs)
+            names(ip$thetaS$probs) <- thetaS.discrete
+        }
+        ip$thetaS$probs <- ip$thetaS$probs/sum(ip$tausq.rel$probs)
+    }
+	# ------------------------------------------------------------------------ #
+    if (tausq.rel.prior == "fixed") {
+        ip$tausq.rel$status <- "fixed"
+        ip$tausq.rel$fixed.value <- tausq.rel
+    }
+    else {
+        ip$tausq.rel$status <- "random"
+        ip$tausq.rel$dist <- tausq.rel.prior
+        if (is.null(tausq.rel.discrete)) 
+            ip$tausq.rel$probs <- NULL
+        else {
+            td <- as.vector(tausq.rel.discrete)
+            names(td) <- NULL
+            ip$tausq.rel$probs <- switch(tausq.rel.prior, uniform = rep(1, 
+                length(td)), reciprocal = ifelse((td > 0), 1/td, 
+                0), user = tausq.rel.prior.probs)
+            names(ip$tausq.rel$probs) <- tausq.rel.discrete
+        }
+        ip$tausq.rel$probs <- ip$tausq.rel$probs/sum(ip$tausq.rel$probs)
+    }
+    if (ip$phi$status == "random") 
+        if (ip$beta$status == "fixed" | ip$sigmasq$status == 
+            "fixed") 
+            stop("random phi with fixed sigmasq and/or beta not implemented")
+    res <- list(beta.prior = beta.prior, beta = beta, beta.var.std = beta.var.std, 
+        sigmasq.prior = sigmasq.prior, sigmasq = sigmasq, df.sigmasq = df.sigmasq, 
+        phi.prior = phi.prior, phi = phi, phi.discrete = phi.discrete, 
+		thetaS.prior = thetaS.prior, thetaS = thetaS, 
+        thetaS.discrete = thetaS.discrete,
+        tausq.rel.prior = tausq.rel.prior, tausq.rel = tausq.rel, 
+        tausq.rel.discrete = tausq.rel.discrete, priors.info = ip, 
+        dep.prior = dep.prior)
+    oldClass(res) <- "prior.geoR"
+    return(res)
+}

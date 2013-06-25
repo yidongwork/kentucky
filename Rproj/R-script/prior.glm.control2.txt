@@ -1,0 +1,141 @@
+"prior.glm.control2" <- function (beta.prior = c("flat", "normal", "fixed"), beta = NULL, 
+    beta.var.std = NULL, sigmasq.prior = c("uniform", "sc.inv.chisq", 
+        "reciprocal", "fixed"), sigmasq = NULL, df.sigmasq = NULL, 
+    phi.prior = c("uniform", "exponential", "fixed", "squared.reciprocal", 
+        "reciprocal"), phi = NULL, phi.discrete = NULL, 
+		thetaS = .5,
+		tausq.rel = 0) 
+{
+    beta.prior <- match.arg(beta.prior)
+    if (beta.prior == "fixed" & is.null(beta)) 
+        stop("argument \"beta\" must be provided with fixed value for this parameter")
+    if (beta.prior == "normal") {
+        if (is.null(beta) | is.null(beta.var.std)) 
+            stop("arguments \"beta\" and \"beta.var.std\" must be provided when using normal prior for the parameter beta")
+        if ((length(beta))^2 != length(beta.var.std)) 
+            stop(" beta and beta.var.std have incompatible dimensions")
+        if (any(beta.var.std != t(beta.var.std))) 
+            stop(" non symmetric matrix in beta.var.std")
+        if (inherits(try(chol(beta.var.std)), "try-error")) 
+            stop(" matrix in beta.var.std is not positive definit")
+    }
+    sigmasq.prior <- match.arg(sigmasq.prior)
+    if (sigmasq.prior == "fixed" & is.null(sigmasq)) 
+        stop("argument \"sigmasq\" must be provided when the parameter sigmaq is fixed")
+    if (sigmasq.prior == "sc.inv.chisq") 
+        if (is.null(sigmasq) | is.null(df.sigmasq)) 
+            stop("arguments \"sigmasq\" and \"df.sigmasq\" must be provided for inverse chisq prior")
+    if (!is.null(sigmasq)) 
+        if (sigmasq < 0) 
+            stop("negative values not allowed for \"sigmasq\"")
+    if (sigmasq.prior == "reciprocal") {
+        warning("This choice of sigmasq.prior gives an improper posterior !!!!!!! \n")
+        sigmasq <- 0
+        df.sigmasq <- 0
+    }
+    if (sigmasq.prior == "uniform") {
+        sigmasq <- 0
+        df.sigmasq <- -2
+    }
+    if (!is.null(phi) && length(phi) > 1) 
+        stop("prior.glm.control: length of phi must be one. ")
+    if (is.numeric(phi.prior)) {
+        phi.prior.probs <- phi.prior
+        phi.prior <- "user"
+        if (is.null(phi.discrete)) 
+            stop("prior.glm.control: argument phi.discrete with support points for phi must be provided\n")
+        if (length(phi.prior.probs) != length(phi.discrete)) 
+            stop("prior.glm.control: user provided phi.prior and phi.discrete have incompatible dimensions\n")
+        if (round(sum(phi.prior.probs), digits = 8) != 1) 
+            stop("prior.glm.control: prior probabilities provided for phi do not sum up to 1")
+    }
+    else phi.prior <- match.arg(phi.prior)
+    if (phi.prior == "fixed") {
+        if (is.null(phi)) {
+            stop("argument \"phi\" must be provided with fixed prior for this parameter")
+        }
+        phi.discrete <- phi
+    }
+    else {
+        if (phi.prior == "exponential" & (is.null(phi) | (length(phi) > 
+            1))) 
+            stop("argument \"phi\" must be provided when using the exponential prior for the parameter phi")
+        if (!is.null(phi.discrete)) {
+            discrete.diff <- diff(phi.discrete)
+            if (round(max(1e+08 * discrete.diff)) != round(min(1e+08 * 
+                discrete.diff))) 
+                stop("The current implementation requires equally spaced values in the argument \"phi.discrete\"\n")
+        }
+        if (phi.prior != "exponential") 
+            phi <- NULL
+        if (sigmasq.prior == "fixed") 
+            stop("option for fixed sigmasq and random phi not implemented")
+    }
+    if (any(phi.discrete < 0)) 
+        stop("negative values not allowed for parameter phi")
+	# Enki
+	# ---------------------- #
+	if (is.null(thetaS)) 
+        stop("argument \"thetaS\" must be provided")
+	# ---------------------- #	
+    if (is.null(tausq.rel)) 
+        stop("argument \"tausq.rel\" must be provided")
+    ip <- list(beta = list(), sigmasq = list(), phi = list())
+    if (beta.prior == "fixed") {
+        ip$beta$status <- "fixed"
+        ip$beta$fixed.value <- beta
+    }
+    else {
+        ip$beta <- list(dist = beta.prior)
+        if (beta.prior == "flat") 
+            ip$beta$pars <- c(0, +Inf)
+        if (beta.prior == "normal") {
+            if (length(beta) == 1) 
+                ip$beta$pars <- c(mean = beta, var.std = beta.var.std)
+            else ip$beta$pars <- list(mean = beta, var.std = beta.var.std)
+        }
+    }
+    if (sigmasq.prior == "fixed") {
+        ip$sigmasq$status <- "fixed"
+        ip$sigmasq$fixed.value <- sigmasq
+    }
+    else {
+        ip$sigmasq <- list(dist = sigmasq.prior)
+        if (sigmasq.prior == "reciprocal") 
+            ip$sigmasq$pars <- c(df = 0, var = +Inf)
+        if (sigmasq.prior == "uniform") 
+            ip$sigmasq$pars <- c(df = -2, var = +Inf)
+        if (sigmasq.prior == "sc.inv.chisq") 
+            ip$sigmasq$pars <- c(df = df.sigmasq, var = sigmasq)
+    }
+    if (phi.prior == "fixed") {
+        ip$phi$status <- "fixed"
+        ip$phi$fixed.value <- phi
+    }
+    else {
+        ip$phi$dist <- phi.prior
+        if (is.null(phi.discrete)) 
+            stop("phi.discrete must be given when parameter phi is random")
+        else {
+            pd <- as.vector(phi.discrete)
+            names(pd) <- NULL
+            ip$phi$probs <- switch(phi.prior, uniform = rep(1, 
+                length(pd)), exponential = dexp(pd, rate = 1/phi), 
+                squared.reciprocal = ifelse((pd > 0), 1/(pd^2), 
+                  0), reciprocal = ifelse((pd > 0), 1/pd, 0), 
+                user = phi.prior.probs)
+            names(ip$phi$probs) <- phi.discrete
+        }
+        if (phi.prior == "exponential") 
+            ip$phi$pars <- c(ip$phi$pars, exp.par = phi)
+        ip$phi$probs <- ip$phi$probs/sum(ip$phi$probs)
+    }
+	ip$thetaS <- list(status = "fixed", fixed.value = thetaS)
+    ip$tausq.rel <- list(status = "fixed", fixed.value = tausq.rel)
+    res <- list(beta.prior = beta.prior, beta = beta, beta.var.std = beta.var.std, 
+        sigmasq.prior = sigmasq.prior, sigmasq = sigmasq, df.sigmasq = df.sigmasq, 
+        phi.prior = phi.prior, phi = phi, phi.discrete = phi.discrete, thetaS = thetaS,
+        tausq.rel = tausq.rel, priors.info = ip)
+    class(res) <- "prior.geoRglm"
+    return(res)
+}
