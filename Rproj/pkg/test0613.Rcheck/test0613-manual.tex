@@ -1,0 +1,124 @@
+\nonstopmode{}
+\documentclass[a4paper]{book}
+\usepackage[times,inconsolata,hyper]{Rd}
+\usepackage{makeidx}
+\usepackage[utf8,latin1]{inputenc}
+% \usepackage{graphicx} % @USE GRAPHICX@
+\makeindex{}
+\begin{document}
+\chapter*{}
+\begin{center}
+{\textbf{\huge Package `test0613'}}
+\par\bigskip{\large \today}
+\end{center}
+\begin{description}
+\raggedright{}
+\item[Type]\AsIs{Package}
+\item[Title]\AsIs{What the package does (short line)}
+\item[Version]\AsIs{1.0}
+\item[Date]\AsIs{2013-06-13}
+\item[Author]\AsIs{Who wrote it}
+\item[Maintainer]\AsIs{Who to complain to }\email{yourfault@somewhere.net}\AsIs{}
+\item[Description]\AsIs{More about what it does (maybe more than one line)}
+\item[License]\AsIs{What license is it under?}
+\end{description}
+\Rdcontents{\R{} topics documented:}
+\inputencoding{utf8}
+\HeaderA{test0613-package}{test0613 \textasciitilde{}\textasciitilde{} package title \textasciitilde{}\textasciitilde{}}{test0613.Rdash.package}
+\aliasA{test0613}{test0613-package}{test0613}
+\keyword{package}{test0613-package}
+%
+\begin{Description}\relax
+More about what it does (maybe more than one line)
+\textasciitilde{}\textasciitilde{} A concise (1-5 lines) description of the package \textasciitilde{}\textasciitilde{}
+\end{Description}
+%
+\begin{Details}\relax
+
+\Tabular{ll}{
+Package: & test0613\\{}
+Type: & Package\\{}
+Version: & 1.0\\{}
+Date: & 2013-06-13\\{}
+License: & What license is it under?\\{}
+}
+\textasciitilde{}\textasciitilde{} An overview of how to use the package, including the most important \textasciitilde{}\textasciitilde{}
+\textasciitilde{}\textasciitilde{} functions \textasciitilde{}\textasciitilde{}
+\end{Details}
+%
+\begin{Author}\relax
+Who wrote it
+
+Maintainer: Who to complain to <yourfault@somewhere.net>
+\textasciitilde{}\textasciitilde{} The author and/or maintainer of the package \textasciitilde{}\textasciitilde{}
+\end{Author}
+%
+\begin{References}\relax
+\textasciitilde{}\textasciitilde{} Literature or other references for background information \textasciitilde{}\textasciitilde{}
+\end{References}
+%
+\begin{SeeAlso}\relax
+\textasciitilde{}\textasciitilde{} Optional links to other man pages, e.g. \textasciitilde{}\textasciitilde{}
+\textasciitilde{}\textasciitilde{} \code{\LinkA{<pkg>}{<pkg>}} \textasciitilde{}\textasciitilde{}
+\end{SeeAlso}
+\inputencoding{utf8}
+\HeaderA{mytestfun}{hello}{mytestfun}
+\keyword{\textbackslash{}textasciitilde{}kwd1}{mytestfun}
+\keyword{\textbackslash{}textasciitilde{}kwd2}{mytestfun}
+%
+\begin{Usage}
+\begin{verbatim}
+mytestfun(a, b)
+\end{verbatim}
+\end{Usage}
+%
+\begin{Arguments}
+\begin{ldescription}
+\item[\code{a}] 
+
+
+\item[\code{b}] 
+
+
+\end{ldescription}
+\end{Arguments}
+%
+\begin{Examples}
+\begin{ExampleCode}
+##---- Should be DIRECTLY executable !! ----
+##-- ==>  Define data, use random,
+##--	or do  help(data=index)  for the standard data sets.
+
+## The function is currently defined as
+function (a, b) 
+{
+    print(a)
+    print(b)
+    print(a + b)
+    return(a * b)
+  }
+\end{ExampleCode}
+\end{Examples}
+\inputencoding{utf8}
+\HeaderA{result}{hello\_result}{result}
+\keyword{datasets}{result}
+%
+\begin{Usage}
+\begin{verbatim}
+data(result)
+\end{verbatim}
+\end{Usage}
+%
+\begin{Format}
+The format is:
+num 200
+\end{Format}
+%
+\begin{Examples}
+\begin{ExampleCode}
+data(result)
+## maybe str(result) ; plot(result) ...
+\end{ExampleCode}
+\end{Examples}
+\printindex{}
+\end{document}

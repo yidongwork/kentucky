@@ -1,0 +1,15 @@
+* installing *source* package 'test0613' ...
+** R
+** preparing package for lazy loading
+[1] 10
+[1] 20
+[1] 30
+** help
+Warning: C:/Rproj/pkg/test0613/man/test0613-package.Rd:33: All text must be in a section
+Warning: C:/Rproj/pkg/test0613/man/test0613-package.Rd:34: All text must be in a section
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded
+*** arch - i386
+*** arch - x64
+* DONE (test0613)
